@@ -5,7 +5,7 @@ export default props => {
     return (
        <Text style={{
            fontSize:props.fontSize,
-           color:'#52197F',
+           color: props.color != null ? props.color : '#52197F',
            margin: 20
            }}>
            {props.text}
