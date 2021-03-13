@@ -8,7 +8,7 @@ import Underline from  '../../components/Underline'
 import TextDefault from '../../components/TextDefault'
 
 import store from '../../Service/storage'
-import Api_legacy from '../../Service/Api'
+import { legacy_baseUrl } from '../../Service/Api'
 
 export default class Task4 extends Component {
 
@@ -29,7 +29,7 @@ export default class Task4 extends Component {
    
     handleSubmit(){
         this.showLoader()
-        Api_legacy.get('/onBoarding/termsOfUse')
+        legacy_baseUrl.get('/onBoarding/termsOfUse')
             .then((res)=>{
                 this.props.navigation.navigate('Task5',{
                     terms: res.data,

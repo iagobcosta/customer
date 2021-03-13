@@ -6,7 +6,7 @@ import Underline from  '../../components/Underline'
 import TextDefault from '../../components/TextDefault'
 
 import store from '../../Service/storage'
-import Api_legacy from '../../Service/Api'
+import { legacy_baseUrl } from '../../Service/Api'
 
 export default class Task3 extends Component {
 
@@ -50,17 +50,18 @@ export default class Task3 extends Component {
                     return
                 }else{
                     this.ErrorInputCode('')
-                    Api_legacy.post('/onBoarding/sms/confirm',{
+                    legacy_baseUrl.post('/onBoarding/sms/confirm',{
                         code: numberInform.value,
                         type: 'ONBOARDING_LEGACY',
                         messageId: this.state.messageId
                     }).then(res => {
-                      Api_legacy.get(`/onBoarding/clients/${this.state.id}/companies`)
+                        legacy_baseUrl.get(`/onBoarding/clients/${this.state.id}/companies`)
                         .then(resp => {
                             let companys = Object.assign({}, resp.data);
                             
                             this.props.navigation.navigate('Task4',{
-                                companys: companys[0]
+                                companys: companys[0],
+                                id: this.state.id
                             })
 
      

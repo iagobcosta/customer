@@ -1,9 +1,13 @@
 import axios from 'axios'
 
-var legacy_baseUrl = axios.create({
-    baseURL: 'http://192.168.0.13:8084',
+export const legacy_baseUrl = axios.create({
+    baseURL: 'http://23.23.53.241:8081',
     timeout: 1000,
     headers: {'X-Custom-Header': 'foobar'}
 });
 
-export default legacy_baseUrl;
+export const rest_baseUrl = axios.create({
+    baseURL: 'http://teste.somacontadigital.com.br/scan-rest-2.30',
+    timeout: 1000,
+    headers: {'X-Custom-Header': 'foobar'}
+});

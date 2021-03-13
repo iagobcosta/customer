@@ -1,5 +1,5 @@
 import React, { Component} from 'react'
-import { StyleSheet, View, Keyboard } from 'react-native'
+import { StyleSheet, View, ScrollView, KeyboardAvoidingView} from 'react-native'
 import { Card } from 'react-native-elements'
 
 import { cpfMask, mascaraData, formatDate } from '../../Util/Mask'
@@ -8,8 +8,10 @@ import InputDefault from '../../components/InputDefault'
 import TextDefault from '../../components/TextDefault'
 import Dialog from '../../components/Dialog'
 
-import Api_legacy from '../../Service/Api'
+import { legacy_baseUrl } from '../../Service/Api'
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler'
+import { CommonActions } from '@react-navigation/native';
+import stylesUnderline from '../../styles/stylesUnderline'
 
 
 export default class Task1 extends Component {
@@ -24,13 +26,15 @@ export default class Task1 extends Component {
             TextErro:'', 
             visible:false, 
             textErroInputCpf:'',
-            textErroInputDate:'' 
+            textErroInputDate:'',
         }
         this.handlechange = this.handlechange.bind(this)
         this.handlechangeDate = this.handlechangeDate.bind(this)
         this.hideDialog = this.hideDialog.bind(this)
         this.ErrorInputCpf = this.ErrorInputCpf.bind(this)
         this.ErrorInputData = this.ErrorInputData.bind(this)
+
+       
       }
 
       showLoader = () => { this.setState({ loading:true }); };
@@ -65,7 +69,7 @@ export default class Task1 extends Component {
 
     
        handleFormSubmit = event => {
-        
+        this.showLoader()
         const user = {
           cpf: this.state.cpf,
           birthday: formatDate(this.state.birthday)
@@ -74,23 +78,37 @@ export default class Task1 extends Component {
         console.log(user.birthday)
         if(user.cpf == null || user.cpf == '' || user.cpf.length < 14){
             this.ErrorInputCpf('Campo CPF é obrigatório!')
-            return
+            this.hideLoader()
         }
-        if(user.birthday == null || user.birthday == '' || user.birthday == '--' || user.birthday.length < 10){
+        else if(user.birthday == null || user.birthday == '' || user.birthday == '--' || user.birthday.length < 10){
             this.ErrorInputData('Campo Data de Nascimento é obrigatório!')
-            return
+            this.hideLoader()
         }else{
-            this.showLoader()
-            Api_legacy.post('/onBoarding/validateBirthday',{
+            
+            legacy_baseUrl.post('/onBoarding/validateBirthday',{
                     cpf: user.cpf,
                     birthday: user.birthday
-            }).then(response => {                
-                this.props.navigation.navigate('Task2', {
-                    exported: response.data.exported ,
-                    id: response.data.id, 
-                    name: response.data.name
-                });
-                this.hideLoader()
+            }).then((response) => {
+                legacy_baseUrl.get(`/onBoarding/clients/${response.data.id}/phones`)
+                    .then((res)=>{
+                       this.props.navigation.navigate('Task2', {
+                            exported: response.data.exported ,
+                            id: response.data.id,
+                            ddd: res.data[0].ddd.toString(),
+                            number: res.data[0].number.toString(),
+                            name: response.data.name
+                        });
+                        this.hideLoader()
+                    })
+                    .catch((error)=>{
+                        if (error.response) {                
+                            let erro = Object.assign({}, error.response.data);
+                            console.log(erro.errors[0].errorDetail);
+                            this.setState({visible:true,TextErro:erro.errors[0].errorDetail.toString()})
+                        }
+                        this.hideLoader()
+                    })
+                
             })
             .catch((error) => {
                 if (error.response) {                
@@ -107,13 +125,14 @@ export default class Task1 extends Component {
         const { cpf, birthday, loading, TextErro, visible, textErroInputCpf, textErroInputDate } = this.state
        
         return(
-            <View style={styles.container}>
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={true}>            
+            <KeyboardAvoidingView contentContainerStyle={styles.container} behavior="position" enabled>
+                         
                     <Dialog text={TextErro} visible={visible} onPress={this.hideDialog}/>
                     <TextDefault
                         text='Informe seu CPF e data de nascimento'
                         fontSize={20}
                     />
+                    <ScrollView style={styles.scrollView}>
                     <Card>                
                         <InputDefault
                             label='CPF'
@@ -137,27 +156,31 @@ export default class Task1 extends Component {
                             keyboardType='numeric'
                             onChangeText={this.handlechangeDate}
                         />
-                    </Card>                     
-                        
-                    </TouchableWithoutFeedback>
+                    </Card>
                     <ButtonDefault 
-                            icon='arrow-right'
-                            title='Continuar '
-                            loading={loading}
-                            onPress={this.handleFormSubmit}
-                        />  
-                </View>
+                        icon='arrow-right'
+                        title='Continuar '
+                        loading={loading}
+                        onPress={this.handleFormSubmit}
+                    /> 
+                    </ScrollView>
+                   
+                </KeyboardAvoidingView>
         )
     }
 }
 
 const styles = StyleSheet.create({
     container:{
-        flex:1
+       
     },
     text:{
         margin: 20,
         fontSize:20,
         color:'#52197F'
+    },
+    scrollView:{
+        //flex:1,
+        width:'100%',
     },
 });

@@ -1,20 +1,18 @@
 import React, { Component, useState} from 'react'
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView } from 'react-native'
-import { TextInput, Card,Title, Paragraph } from 'react-native-paper';
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView} from 'react-native'
+import { Card } from 'react-native-paper';
 
 import md5 from 'md5'
 
 import ButtonDefault from '../../components/Button'
 import TextInputDefault from '../../components/TextInputDefault'
 
-import Underline from  '../../components/Underline'
 import TextDefault from '../../components/TextDefault'
 
 import store from '../../Service/storage'
-import { legacy_baseUrl } from '../../Service/Api'
-import { termsFormat } from '../../Util/Mask'
+import { rest_baseUrl } from '../../Service/Api'
 
-export default class Task6 extends Component {
+export default class Task7 extends Component {
 
     constructor(props) {
         super(props)        
@@ -22,19 +20,18 @@ export default class Task6 extends Component {
             id: props.route.params.id,
             companys: props.route.params.companys,
             loading:false,
-            username:'',
-            password:'',
-            confirmPassword:'',
+            username:props.route.params.username,
+            password:props.route.params.password,
+            cardPassword:'',
+            cardConfirmPassword:'',
             disabled:true,
             error:false,
             textError:'',
-            erroUsernameIsExist:false
 
         }
         this.handleSubmit = this.handleSubmit.bind(this)
-        this.handlechangeUsername = this.handlechangeUsername.bind(this)
-        this.handlechangePassword = this.handlechangePassword.bind(this)
-        this.handlechangeConfirmPassword = this.handlechangeConfirmPassword.bind(this)
+        this.handlechangeCardPassword = this.handlechangeCardPassword.bind(this)
+        this.handlechangeCardConfirmPassword = this.handlechangeCardConfirmPassword.bind(this)
     }
 
     showLoader = () => { this.setState({ loading:true }); };
@@ -46,99 +43,89 @@ export default class Task6 extends Component {
     showError = () => { this.setState({ error:true }); };
     hideError = () => { this.setState({ error:false }); };
 
-    showErroUsernameIsExist = () => { this.setState({ erroUsernameIsExist:true }); };
-    hideErroUsernameIsExist = () => { this.setState({ erroUsernameIsExist:false }); };
-
     showTextError = () => { this.setState({ textError:'As senhas não coincidem.' }); };
-    showTextErrorUserIsExist = () => { this.setState({ textError:'Já existe um usuário com esse nome!.' }); };
     hideTextError = () => { this.setState({ textError:'' }); };
 
-    handlechangeUsername(inputText) {
-        this.setState({ username: inputText})
+
+    handlechangeCardPassword(inputText) {       
+        this.setState({ cardPassword: inputText})        
     }
 
-    handlechangePassword(inputText) {       
-        this.setState({ password: inputText})        
-    }
-
-    handlechangeConfirmPassword(inputText) {
-        if (this.state.username != '' && this.state.password != '' && this.state.confirmPassword.length >= 5){
+    handlechangeCardConfirmPassword(inputText) {
+        if (this.state.cardPassword != '' && this.state.cardConfirmPassword.length >= 3){
             this.showButton()
         }else{
             this.hideButton()
         }
-        this.setState({ confirmPassword: inputText})        
+        this.setState({ cardConfirmPassword: inputText})        
     }
    
     handleSubmit(){
         this.showLoader()
-        if(this.state.password != this.state.confirmPassword){
+        if(this.state.cardPassword != this.state.cardConfirmPassword){
             this.showError()
             this.showTextError()
             this.hideLoader()
+            return
         }else{
             this.hideError()
             this.hideTextError()
-        }
-        let username = this.state.username.toString().trim()
-        legacy_baseUrl.post(`/onBoarding/checkUsernameAvailability?username=${username.toUpperCase()}`)
-            .then((res)=>{
-                this.hideErroUsernameIsExist()
-                this.props.navigation.navigate('Task7',{         
-                    id: this.state.id,
-                    companys: this.state.companys,
-                    username: this.state.username,
-                    password: md5(this.state.password)
+            let cardPassword = md5(this.state.cardPassword)
+            const dataOnboarding = {
+                id: this.state.id,
+                cardCode: this.state.companys.cardCode,
+                username: this.state.username,
+                password: this.state.password,
+                cardPassword: cardPassword
+            }
+            rest_baseUrl.post('/documentos/configuracoes/pesquisar',{
+                codigoCadastroUnico: dataOnboarding.id
+            }).then((res)=>{
+                this.props.navigation.navigate('Task8',{         
+                    dataOnboarding: dataOnboarding,
+                    documents: res.data
                 })
-            })
-            .catch((error)=>{
-                this.showErroUsernameIsExist()
-                this.showTextErrorUserIsExist()
+                this.hideLoader()
+            }).catch((error)=>{
                 console.log(error)
                 this.hideLoader()
-            })  
+            })
+            this.hideLoader()
+           
+        }
         
-      
     }
 
     render(){
-        const { loading, username, disabled, password, confirmPassword, error, textError, erroUsernameIsExist} = this.state       
+        const { loading, disabled, cardConfirmPassword, cardPassword, error, textError} = this.state       
 
         return (
-            <KeyboardAvoidingView style={styles.container} behavior="position" enabled>
+            <KeyboardAvoidingView contentContainerStyle={styles.container} behavior="position" enabled>
                 <TextDefault 
-                 text= 'Agora cadastre abaixo um usuário e senha para acessar o app'
+                 text= 'Agora cadastre abaixo a senha do seu cartão somapay'
                  fontSize={18}
                 />
                 <ScrollView style={styles.scrollView}>
                     <Card style={styles.card}>
                         <TextDefault 
-                            text= 'Uma dica! Não cadastre a senha com sequência numéricas fáceis(Exemplos: 123456, 111111, 222222 ...).'
+                            text= 'Uma dica! Não cadastre a senha com sequência numéricas fáceis(Exemplos: 1234, 1111, 2222 ...).'
                             fontSize={14}
                             color='#FF7F00'
-                        />                  
-                        <TextInputDefault
-                            label='usuário'
-                            value={username}
-                            error={erroUsernameIsExist}
-                            onChangeText={this.handlechangeUsername}
-                            paragraph1='Deve conter apenas letras e números.'
-                            paragraph2='Não deve conter pontos, traços ou espaços.'
-                        />
+                        />  
                         <TextInputDefault
                             label='senha'
-                            value={password}
+                            value={cardPassword}
                             secureTextEntry={true}
-                            onChangeText={this.handlechangePassword}
+                            onChangeText={this.handlechangeCardPassword}
                             error={error}
                             paragraph1='pode conter letras e números.'
                         />
                          <TextInputDefault
                             label='confirme a senha'
-                            value={confirmPassword}
+                            value={cardConfirmPassword}
                             secureTextEntry={true}
                             error={error}
-                            onChangeText={this.handlechangeConfirmPassword}
+                            onChangeText={this.handlechangeCardConfirmPassword}
                         />
                         <Text style={{color:'red', fontSize:14}}>{textError}</Text>
                     </Card>
@@ -161,16 +148,13 @@ export default class Task6 extends Component {
 
 const styles = StyleSheet.create({
     container:{
-        flex:1,
         justifyContent: 'center',
         alignItems:'center'
     },
     card:{
-        flex:1,
         padding: 10
     },
     scrollView:{
-        flex:1,
         width:'100%',
         padding: 7
     },

@@ -1,8 +1,8 @@
 import React, { Component} from 'react'
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, ScrollView } from 'react-native'
 import ButtonDefault from '../../components/Button'
 import TextDefault from '../../components/TextDefault'
-import Api_legacy from '../../Service/Api'
+import { legacy_baseUrl } from '../../Service/Api'
 
 export default class Task2 extends Component {
 
@@ -12,8 +12,8 @@ export default class Task2 extends Component {
             exported: props.route.params.exported,
             id: props.route.params.id,
             name: props.route.params.name,
-            number:'',
-            ddd: '',
+            number:props.route.params.number,
+            ddd: props.route.params.ddd,
             ddi: '55',
             type: 'ONBOARDING_LEGACY',
             loading: false,
@@ -32,24 +32,12 @@ export default class Task2 extends Component {
         this.setState({ddd: values.ddd, number: values.number});
     }
 
-    async componentDidMount(){
-        try{
-            let resp = await Api_legacy.get(`/onBoarding/clients/${this.state.id}/phones`)
-            const values = {
-                ddd: resp.data[0].ddd.toString(),
-                number: resp.data[0].number.toString()
-            }
-              this.initInformation(values)  
-        }catch(e){
-
-        }
-        
-    }
+  
 
     handleSubmit(){
         this.showLoader()
 
-        Api_legacy.post('/onBoarding/sms/send',{
+        legacy_baseUrl.post('/onBoarding/sms/send',{
             ddi: this.state.ddi,
             ddd: this.state.ddd,
             number: this.state.number,
@@ -73,6 +61,7 @@ export default class Task2 extends Component {
         const { name, number, ddd, loading } =  this.state
         return(
             <View style={styles.container}>
+                <ScrollView>
                 <TextDefault 
                     text={`Olá ${name} para confirmarmos seu telefone, enviaremos um SMS para o número abaixo contendo um código, que será requisitado na próxima tela.`}
                     fontSize={20}
@@ -90,7 +79,8 @@ export default class Task2 extends Component {
                     title='Continuar '
                     loading={loading}
                     onPress={this.handleSubmit}
-                />  
+                />
+                </ScrollView>
             </View>
         )
     }

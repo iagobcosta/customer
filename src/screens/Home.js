@@ -18,8 +18,7 @@ export default function Home({ navigation }) {
   }
 
   const entrarOnboarding = () => {
-    console.log("Entrou")
-    navigation.navigate('Onboarding') 
+    navigation.navigate('Onboarding', { screen: 'Task1'}) 
   }
   
   const theme = {
