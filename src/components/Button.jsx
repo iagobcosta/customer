@@ -15,6 +15,7 @@ export default props => {
                     />
                 }
                 iconRight
+                disabled={props.disabled === true ? props.disabled : false}
                 loading={props.loading}
                 title={props.title}
                 onPress={props.onPress}
